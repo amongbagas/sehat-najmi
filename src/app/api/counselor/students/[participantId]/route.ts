@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest, { params }: { params: { participantId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ participantId: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { participantI
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { participantId } = params;
+    const { participantId } = await params;
 
     const student = await prisma.studentProfile.findUnique({
       where: { participantId },
