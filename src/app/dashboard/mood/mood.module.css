@@ -1,0 +1,170 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header h1 {
+  margin: 0 0 8px 0;
+  color: var(--primary);
+  font-size: 28px;
+}
+
+.header p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.checkinCard {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #E2E8F0;
+}
+
+.checkinCard h2 {
+  margin: 0 0 24px 0;
+  font-size: 20px;
+  color: var(--primary);
+}
+
+.moodSelector {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.moodOption {
+  flex: 1;
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid #E2E8F0;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.moodOption:hover {
+  background: rgba(0, 180, 169, 0.05);
+  border-color: rgba(0, 180, 169, 0.3);
+}
+
+.moodOption.selected {
+  border-color: var(--accent);
+  background: rgba(0, 180, 169, 0.1);
+  transform: scale(1.02);
+}
+
+.moodEmoji {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.moodLabel {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.noteSection {
+  margin-bottom: 24px;
+}
+
+.noteLabel {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.noteInput {
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid #E2E8F0;
+  font-family: inherit;
+  font-size: 15px;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.noteInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 180, 169, 0.1);
+}
+
+.historyCard {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #E2E8F0;
+}
+
+.historyCard h2 {
+  margin: 0 0 24px 0;
+  font-size: 20px;
+  color: var(--primary);
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--background);
+  border: 1px solid #E2E8F0;
+}
+
+.historyEmoji {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.historyDetails {
+  flex: 1;
+}
+
+.historyMood {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--primary);
+  margin: 0 0 4px 0;
+}
+
+.historyNote {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.historyDate {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}

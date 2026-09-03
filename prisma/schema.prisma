@@ -1,0 +1,190 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  role      String   @default("STUDENT") // STUDENT, COUNSELOR, ADMIN, RESEARCHER
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  studentProfile   StudentProfile?
+  counselorProfile CounselorProfile?
+  
+  // Messaging & Forum
+  sentMessages     Message[]    @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
+  forumTopics      ForumTopic[]
+  forumPosts       ForumPost[]
+}
+
+model StudentProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nis           String   @unique
+  participantId String   @unique // Important: Separates identity from research data
+  class         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Back references for research data linked to participantId
+  moodEntries       MoodEntry[]
+  journalEntries    JournalEntry[]
+  cbtSessions       CbtSession[]
+  gameSessions      GameSession[]
+  missionProgress   MissionProgress[]
+  gratitudeEntries  GratitudeEntry[]
+  aiConversations   AiConversation[]
+  assessmentResults AssessmentResult[]
+  usabilitySurveys  UsabilitySurvey[]
+  crisisAlerts      CrisisAlert[]
+}
+
+model CounselorProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nip       String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ================= RESEARCH DATA MODELS =================
+// These models should ideally only reference participantId in exports
+
+model MoodEntry {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  moodValue     Int            // 1: Very Bad, 2: Bad, 3: Okay, 4: Good, 5: Very Good
+  note          String?
+  timestamp     DateTime       @default(now())
+}
+
+model JournalEntry {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  prompt        String?
+  content       String
+  timestamp     DateTime       @default(now())
+}
+
+model CbtSession {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  activityType  String
+  duration      Int?           // in seconds
+  completed     Boolean        @default(false)
+  timestamp     DateTime       @default(now())
+}
+
+model GameSession {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  gameId        String
+  score         Int?
+  duration      Int?           // in seconds
+  completed     Boolean        @default(false)
+  timestamp     DateTime       @default(now())
+}
+
+model MissionProgress {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  missionId     String
+  status        String         // PENDING, COMPLETED
+  timestamp     DateTime       @default(now())
+}
+
+model GratitudeEntry {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  content       String
+  timestamp     DateTime       @default(now())
+}
+
+model AiConversation {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  messageCount  Int            @default(0)
+  startedAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model AssessmentResult {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  type          String         // PRE_TEST, POST_TEST
+  score         Int
+  timestamp     DateTime       @default(now())
+}
+
+model UsabilitySurvey {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  usabilityScore Float
+  satisfaction   Float
+  featureRating  Float
+  feedback      String?
+  timestamp     DateTime       @default(now())
+}
+
+model CrisisAlert {
+  id            String         @id @default(cuid())
+  participantId String
+  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  status        String         @default("PENDING") // PENDING, RESOLVED
+  notes         String?
+  timestamp     DateTime       @default(now())
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content     String
+  read        Boolean  @default(false)
+  timestamp   DateTime @default(now())
+}
+
+model ForumTopic {
+  id        String      @id @default(cuid())
+  title     String
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  posts     ForumPost[]
+  timestamp DateTime    @default(now())
+}
+
+model ForumPost {
+  id        String     @id @default(cuid())
+  topicId   String
+  topic     ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  timestamp DateTime   @default(now())
+}
