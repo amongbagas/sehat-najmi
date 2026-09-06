@@ -105,18 +105,37 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Registration error:", error);
+    console.error("Registration error:", error?.message || error);
+    console.error("Registration error stack:", error?.stack);
+    console.error("Registration error code:", error?.code);
 
     // Handle Prisma unique constraint errors
-    if (error.code === "P2002") {
+    if (error?.code === "P2002") {
+      const target = error?.meta?.target;
       return NextResponse.json(
-        { error: "Data sudah terdaftar. Silakan cek email atau NIS." },
+        { error: `Data sudah terdaftar pada field: ${target || "email/NIS"}. Silakan gunakan data lain.` },
         { status: 409 }
       );
     }
 
+    // Handle Prisma connection errors
+    if (error?.code === "P1001" || error?.code === "P1002") {
+      return NextResponse.json(
+        { error: "Tidak dapat terhubung ke database. Pastikan database sudah berjalan." },
+        { status: 503 }
+      );
+    }
+
+    // Handle Prisma validation errors
+    if (error?.code?.startsWith?.("P2")) {
+      return NextResponse.json(
+        { error: `Kesalahan data: ${error.message}` },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Terjadi kesalahan server. Silakan coba lagi." },
+      { error: `Terjadi kesalahan server: ${error?.message || "Unknown error"}. Silakan coba lagi.` },
       { status: 500 }
     );
   }
