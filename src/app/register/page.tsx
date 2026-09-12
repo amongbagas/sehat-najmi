@@ -51,7 +51,12 @@ export default function RegisterPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = { error: "Terjadi kesalahan pada server (respons tidak valid)." };
+      }
 
       if (!res.ok) {
         setError(data.error || "Terjadi kesalahan saat mendaftar.");
@@ -61,8 +66,9 @@ export default function RegisterPage() {
 
       // Registration successful, redirect to login
       router.push("/login?registered=true");
-    } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+    } catch (err: any) {
+      console.error("Registration catch error:", err);
+      setError(err?.message ? `Terjadi kesalahan sistem: ${err.message}` : "Terjadi kesalahan. Silakan coba lagi.");
       setIsLoading(false);
     }
   };
