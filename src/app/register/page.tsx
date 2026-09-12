@@ -53,8 +53,11 @@ export default function RegisterPage() {
 
       let data;
       try {
+        const text = await res.clone().text();
+        console.log("Raw API Response:", text);
         data = await res.json();
       } catch (e) {
+        console.error("JSON parse error:", e);
         data = { error: "Terjadi kesalahan pada server (respons tidak valid)." };
       }
 
