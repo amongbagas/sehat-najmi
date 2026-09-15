@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { name, email, password, role, nis, kelas, nip } = body;
+    const body: unknown = await req.json();
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Data registrasi tidak valid." }, { status: 400 });
+    }
+
+    const input = body as Record<string, unknown>;
+    const name = typeof input.name === "string" ? input.name.trim() : "";
+    const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+    const password = typeof input.password === "string" ? input.password : "";
+    const nis = typeof input.nis === "string" ? input.nis.trim() : "";
+    const kelas = typeof input.kelas === "string" ? input.kelas.trim() : "";
 
     // Validate required fields
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password || !nis || !kelas) {
       return NextResponse.json(
-        { error: "Nama, email, password, dan role wajib diisi." },
+        { error: "Nama, email, password, NIS, dan kelas wajib diisi." },
         { status: 400 }
       );
     }
@@ -18,13 +29,6 @@ export async function POST(req: Request) {
     if (password.length < 6) {
       return NextResponse.json(
         { error: "Password minimal 6 karakter." },
-        { status: 400 }
-      );
-    }
-
-    if (!["STUDENT", "COUNSELOR"].includes(role)) {
-      return NextResponse.json(
-        { error: "Role tidak valid." },
         { status: 400 }
       );
     }
@@ -41,34 +45,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // For students, validate NIS and class
-    if (role === "STUDENT") {
-      if (!nis || !kelas) {
-        return NextResponse.json(
-          { error: "NIS dan Kelas wajib diisi untuk siswa." },
-          { status: 400 }
-        );
-      }
+    const existingNis = await prisma.studentProfile.findUnique({
+      where: { nis },
+    });
 
-      const existingNis = await prisma.studentProfile.findUnique({
-        where: { nis },
-      });
-
-      if (existingNis) {
-        return NextResponse.json(
-          { error: "NIS sudah terdaftar. Silakan hubungi guru BK." },
-          { status: 409 }
-        );
-      }
+    if (existingNis) {
+      return NextResponse.json(
+        { error: "NIS sudah terdaftar. Silakan hubungi guru BK." },
+        { status: 409 }
+      );
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Generate participantId for students
-    const participantId = role === "STUDENT"
-      ? `P${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`
-      : undefined;
+    const participantId = `P${randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase()}`;
 
     // Create user with profile in a transaction
     const user = await prisma.user.create({
@@ -76,24 +68,14 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
-        role,
-        ...(role === "STUDENT"
-          ? {
-              studentProfile: {
-                create: {
-                  nis,
-                  class: kelas,
-                  participantId: participantId!,
-                },
-              },
-            }
-          : {
-              counselorProfile: {
-                create: {
-                  nip: nip || null,
-                },
-              },
-            }),
+        role: "STUDENT",
+        studentProfile: {
+          create: {
+            nis,
+            class: kelas,
+            participantId,
+          },
+        },
       },
     });
 
@@ -104,38 +86,27 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    console.error("Registration error:", error?.message || error);
-    console.error("Registration error stack:", error?.stack);
-    console.error("Registration error code:", error?.code);
+  } catch (error: unknown) {
+    console.error("Registration error:", error);
 
     // Handle Prisma unique constraint errors
-    if (error?.code === "P2002") {
-      const target = error?.meta?.target;
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(
-        { error: `Data sudah terdaftar pada field: ${target || "email/NIS"}. Silakan gunakan data lain.` },
+        { error: "Email atau NIS sudah terdaftar. Silakan gunakan data lain." },
         { status: 409 }
       );
     }
 
     // Handle Prisma connection errors
-    if (error?.code === "P1001" || error?.code === "P1002") {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && ["P1001", "P1002"].includes(error.code)) {
       return NextResponse.json(
         { error: "Tidak dapat terhubung ke database. Pastikan database sudah berjalan." },
         { status: 503 }
       );
     }
 
-    // Handle Prisma validation errors
-    if (error?.code?.startsWith?.("P2")) {
-      return NextResponse.json(
-        { error: `Kesalahan data: ${error.message}` },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { error: `Terjadi kesalahan server: ${error?.message || "Unknown error"}. Silakan coba lagi.` },
+      { error: "Terjadi kesalahan server. Silakan coba lagi." },
       { status: 500 }
     );
   }

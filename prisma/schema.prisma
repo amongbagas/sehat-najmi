@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -18,11 +19,11 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relations
   studentProfile   StudentProfile?
   counselorProfile CounselorProfile?
-  
+
   // Messaging & Forum
   sentMessages     Message[]    @relation("SentMessages")
   receivedMessages Message[]    @relation("ReceivedMessages")
@@ -39,7 +40,7 @@ model StudentProfile {
   class         String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
+
   // Back references for research data linked to participantId
   moodEntries       MoodEntry[]
   journalEntries    JournalEntry[]
@@ -69,7 +70,7 @@ model MoodEntry {
   id            String         @id @default(cuid())
   participantId String
   student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
-  moodValue     Int            // 1: Very Bad, 2: Bad, 3: Okay, 4: Good, 5: Very Good
+  moodValue     Int // 1: Very Bad, 2: Bad, 3: Okay, 4: Good, 5: Very Good
   note          String?
   timestamp     DateTime       @default(now())
 }
@@ -88,7 +89,7 @@ model CbtSession {
   participantId String
   student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
   activityType  String
-  duration      Int?           // in seconds
+  duration      Int? // in seconds
   completed     Boolean        @default(false)
   timestamp     DateTime       @default(now())
 }
@@ -99,7 +100,7 @@ model GameSession {
   student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
   gameId        String
   score         Int?
-  duration      Int?           // in seconds
+  duration      Int? // in seconds
   completed     Boolean        @default(false)
   timestamp     DateTime       @default(now())
 }
@@ -109,7 +110,7 @@ model MissionProgress {
   participantId String
   student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
   missionId     String
-  status        String         // PENDING, COMPLETED
+  status        String // PENDING, COMPLETED
   timestamp     DateTime       @default(now())
 }
 
@@ -134,20 +135,20 @@ model AssessmentResult {
   id            String         @id @default(cuid())
   participantId String
   student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
-  type          String         // PRE_TEST, POST_TEST
+  type          String // PRE_TEST, POST_TEST
   score         Int
   timestamp     DateTime       @default(now())
 }
 
 model UsabilitySurvey {
-  id            String         @id @default(cuid())
-  participantId String
-  student       StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
+  id             String         @id @default(cuid())
+  participantId  String
+  student        StudentProfile @relation(fields: [participantId], references: [participantId], onDelete: Cascade)
   usabilityScore Float
   satisfaction   Float
   featureRating  Float
-  feedback      String?
-  timestamp     DateTime       @default(now())
+  feedback       String?
+  timestamp      DateTime       @default(now())
 }
 
 model CrisisAlert {
@@ -160,14 +161,14 @@ model CrisisAlert {
 }
 
 model Message {
-  id          String   @id @default(cuid())
-  senderId    String
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiverId  String
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-  content     String
-  read        Boolean  @default(false)
-  timestamp   DateTime @default(now())
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  read       Boolean  @default(false)
+  timestamp  DateTime @default(now())
 }
 
 model ForumTopic {

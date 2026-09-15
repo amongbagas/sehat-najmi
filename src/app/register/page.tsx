@@ -5,18 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./register.module.css";
 
-type Role = "STUDENT" | "COUNSELOR";
-
 export default function RegisterPage() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>("STUDENT");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [nis, setNis] = useState("");
   const [kelas, setKelas] = useState("");
-  const [nip, setNip] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,13 +33,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const body: Record<string, string> = { name, email, password, role };
-      if (role === "STUDENT") {
-        body.nis = nis;
-        body.kelas = kelas;
-      } else {
-        body.nip = nip;
-      }
+      const body = { name, email, password, nis, kelas };
 
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -69,9 +59,9 @@ export default function RegisterPage() {
 
       // Registration successful, redirect to login
       router.push("/login?registered=true");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Registration catch error:", err);
-      setError(err?.message ? `Terjadi kesalahan sistem: ${err.message}` : "Terjadi kesalahan. Silakan coba lagi.");
+      setError(err instanceof Error ? `Terjadi kesalahan sistem: ${err.message}` : "Terjadi kesalahan. Silakan coba lagi.");
       setIsLoading(false);
     }
   };
@@ -82,23 +72,7 @@ export default function RegisterPage() {
         <div className={styles.logo}>SEHAT</div>
         <div className={styles.subtitle}>Buat akun baru untuk memulai</div>
 
-        {/* Role Tabs */}
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            className={`${styles.tab} ${role === "STUDENT" ? styles.active : ""}`}
-            onClick={() => setRole("STUDENT")}
-          >
-            🎒 Siswa
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${role === "COUNSELOR" ? styles.active : ""}`}
-            onClick={() => setRole("COUNSELOR")}
-          >
-            👨‍🏫 Guru BK
-          </button>
-        </div>
+        <div className={`${styles.tabs} ${styles.active}`}>🎒 Registrasi Siswa</div>
 
         {error && <div className={styles.error}>{error}</div>}
 
@@ -129,8 +103,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          {role === "STUDENT" && (
-            <>
+          <>
               <div className={styles.inputGroup}>
                 <label className={styles.label} htmlFor="nis">NIS (Nomor Induk Siswa)</label>
                 <input
@@ -155,22 +128,7 @@ export default function RegisterPage() {
                   required
                 />
               </div>
-            </>
-          )}
-
-          {role === "COUNSELOR" && (
-            <div className={styles.inputGroup}>
-              <label className={styles.label} htmlFor="nip">NIP (Nomor Induk Pegawai)</label>
-              <input
-                id="nip"
-                type="text"
-                className={styles.input}
-                placeholder="Contoh: 198501012010011001"
-                value={nip}
-                onChange={(e) => setNip(e.target.value)}
-              />
-            </div>
-          )}
+          </>
 
           <div className={styles.inputGroup}>
             <label className={styles.label} htmlFor="password">Password</label>

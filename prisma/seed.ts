@@ -1,9 +1,13 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Seed is disabled in production')
+  }
+
   console.log('Seeding demo data...')
 
   // Clear existing data
