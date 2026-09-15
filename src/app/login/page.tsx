@@ -24,17 +24,19 @@ function LoginContent() {
       const res = await signIn("credentials", {
         identifier,
         password,
+        callbackUrl: "/dashboard",
         redirect: false,
       });
 
-      if (res?.error) {
+      if (!res?.ok || res.error) {
         setError("Email/NIS atau password salah. Silakan cek kembali.");
         setIsLoading(false);
       } else {
-        // Full page reload so the session cookie is read before proxy intercepts
-        window.location.href = "/dashboard";
+        // signIn already refreshes SessionProvider when redirect is disabled.
+        // Client navigation avoids downloading and hydrating the whole app again.
+        router.replace("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.");
       setIsLoading(false);
     }

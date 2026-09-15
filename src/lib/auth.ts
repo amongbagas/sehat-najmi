@@ -22,26 +22,16 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Search by email first
-        let user = await prisma.user.findUnique({
-          where: { email: credentials.identifier },
-          include: { studentProfile: true, counselorProfile: true }
+        const identifier = credentials.identifier.trim();
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: identifier },
+              { studentProfile: { is: { nis: identifier } } },
+            ],
+          },
+          include: { studentProfile: true },
         });
-
-        // If not found by email, try to find by NIS
-        if (!user) {
-          const student = await prisma.studentProfile.findUnique({
-            where: { nis: credentials.identifier },
-            include: { user: true }
-          });
-          
-          if (student) {
-            user = await prisma.user.findUnique({
-              where: { id: student.userId },
-              include: { studentProfile: true, counselorProfile: true }
-            });
-          }
-        }
 
         if (!user) {
           return null;
