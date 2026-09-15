@@ -53,22 +53,34 @@ export default function AiPage() {
         body: JSON.stringify({ message: userMsg }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: "ai",
-          content: data.reply,
-          isEmergency: data.isEmergency
-        }]);
-      } else {
-        throw new Error("API failed");
+      const data: unknown = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        const apiError =
+          data && typeof data === "object" && "error" in data && typeof data.error === "string"
+            ? data.error
+            : "SEHAT AI gagal merespons. Silakan coba lagi.";
+        throw new Error(apiError);
       }
+
+      if (!data || typeof data !== "object" || !("reply" in data) || typeof data.reply !== "string") {
+        throw new Error("Respons SEHAT AI tidak valid. Silakan coba lagi.");
+      }
+
+      const reply = data.reply;
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: "ai",
+        content: reply,
+        isEmergency: "isEmergency" in data && data.isEmergency === true
+      }]);
     } catch (error) {
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         role: "ai",
-        content: "Sorry, I am having trouble connecting right now. Please try again later.",
+        content: error instanceof Error
+          ? error.message
+          : "SEHAT AI gagal merespons. Silakan coba lagi.",
       }]);
     } finally {
       setIsLoading(false);

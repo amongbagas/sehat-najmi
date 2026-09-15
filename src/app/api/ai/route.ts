@@ -14,35 +14,49 @@ const FALLBACK_RESPONSES = [
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user.participantId) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { message } = await req.json();
+    const body: unknown = await req.json().catch(() => null);
+    const message =
+      body && typeof body === "object" && "message" in body && typeof body.message === "string"
+        ? body.message.trim()
+        : "";
 
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
+    if (message.length > 2_000) {
+      return NextResponse.json(
+        { error: "Message must be 2,000 characters or fewer" },
+        { status: 400 }
+      );
+    }
+
     const participantId = session.user.participantId;
 
-    // Track AI conversation usage in DB
-    const conversation = await prisma.aiConversation.findFirst({
-      where: { participantId },
-    });
+    // Research usage is tied to StudentProfile. Staff accounts may use the AI,
+    // but must not be assigned a fake participant identity or included in data.
+    if (participantId) {
+      const conversation = await prisma.aiConversation.findFirst({
+        where: { participantId },
+      });
 
-    if (conversation) {
-      await prisma.aiConversation.update({
-        where: { id: conversation.id },
-        data: { messageCount: { increment: 1 } },
-      });
-    } else {
-      await prisma.aiConversation.create({
-        data: {
-          participantId,
-          messageCount: 1,
-        },
-      });
+      if (conversation) {
+        await prisma.aiConversation.update({
+          where: { id: conversation.id },
+          data: { messageCount: { increment: 1 } },
+        });
+      } else {
+        await prisma.aiConversation.create({
+          data: {
+            participantId,
+            messageCount: 1,
+          },
+        });
+      }
     }
 
     // Determine Provider
