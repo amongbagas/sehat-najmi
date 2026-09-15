@@ -84,6 +84,7 @@ export default function CounselorLayout({
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -128,6 +129,7 @@ export default function CounselorLayout({
 
         <Link
           href="/dashboard"
+          prefetch={true}
           style={{
             display: "flex",
             alignItems: "center",

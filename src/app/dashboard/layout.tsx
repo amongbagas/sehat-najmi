@@ -92,6 +92,7 @@ export default function DashboardLayout({
             <Link
               key={item.name}
               href={item.href}
+              prefetch={true}
               className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
             >
               <span className={styles.navIcon}>{item.icon}</span>
